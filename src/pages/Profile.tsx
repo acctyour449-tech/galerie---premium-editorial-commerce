@@ -4,9 +4,19 @@
  */
 
 import { motion } from 'motion/react';
-import { User, ReceiptText, MapPin, Shield } from 'lucide-react';
+import { User, ReceiptText, MapPin, Shield, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-8 py-16 flex flex-col md:flex-row gap-16 animate-in fade-in duration-700">
       {/* Sidebar Navigation */}
@@ -28,6 +38,13 @@ export default function Profile() {
           <button className="flex items-center gap-3 px-6 py-4 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all font-medium group">
             <Shield size={20} className="group-hover:text-on-surface transition-colors" />
             <span>Security</span>
+          </button>
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-6 py-4 rounded-xl text-error hover:bg-error/5 transition-all font-medium group mt-8 border border-transparent hover:border-error/20"
+          >
+            <LogOut size={20} />
+            <span>Sign Out</span>
           </button>
         </nav>
       </aside>

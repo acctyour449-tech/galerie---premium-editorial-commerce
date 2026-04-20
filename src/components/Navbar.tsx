@@ -4,9 +4,12 @@
  */
 
 import { Link } from 'react-router-dom';
-import { Search, ShoppingBag, UserCircle } from 'lucide-react';
+import { Search, ShoppingBag, UserCircle, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
+  const { user, isAuthenticated } = useAuth();
+
   return (
     <nav className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xl w-full top-0 sticky z-50">
       <div className="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
@@ -22,7 +25,23 @@ export default function Navbar() {
         <div className="flex items-center gap-6 text-primary dark:text-primary-container">
           <button className="hover:opacity-70 transition-opacity duration-300"><Search size={20} /></button>
           <Link to="/cart" className="hover:opacity-70 transition-opacity duration-300"><ShoppingBag size={20} /></Link>
-          <Link to="/login" className="hover:opacity-70 transition-opacity duration-300"><UserCircle size={20} /></Link>
+          
+          {isAuthenticated ? (
+            <div className="flex items-center gap-6">
+              {user?.role === 'seller' && (
+                <Link to="/seller" title="Merchant Dashboard" className="hover:opacity-70 transition-opacity duration-300">
+                  <LayoutDashboard size={20} />
+                </Link>
+              )}
+              <Link to="/profile" title="Account" className="hover:opacity-70 transition-opacity duration-300">
+                <UserCircle size={20} />
+              </Link>
+            </div>
+          ) : (
+            <Link to="/login" title="Login" className="hover:opacity-70 transition-opacity duration-300">
+              <UserCircle size={20} />
+            </Link>
+          )}
         </div>
       </div>
       <div className="bg-stone-100/50 dark:bg-stone-800/50 h-[1px] w-full"></div>
