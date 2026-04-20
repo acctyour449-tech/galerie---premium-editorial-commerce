@@ -6,9 +6,22 @@
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
-import { PRODUCTS } from '../data';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 export default function Shop() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      const { data } = await supabase.from('products').select('*');
+      if (data) setProducts(data);
+      setLoading(false);
+    }
+    fetchProducts();
+  }, []);
+
   return (
     <div className="w-full flex flex-col md:flex-row gap-16 lg:gap-24 max-w-screen-2xl mx-auto px-6 md:px-12 py-16 md:py-24 animate-in fade-in duration-700">
       {/* Sidebar Filters */}
@@ -50,7 +63,7 @@ export default function Shop() {
 
         <div className="flex justify-between items-center py-4 border-b border-surface-container-low">
           <div className="text-sm text-on-surface-variant font-medium">
-            Showing {PRODUCTS.length} items
+            {loading ? 'Loading items...' : `Showing ${products.length} items`}
           </div>
           <button className="flex items-center gap-2 text-sm text-on-surface hover:opacity-70 transition-opacity uppercase font-bold tracking-widest text-[10px]">
             <span>Sort by: Featured</span>
@@ -59,7 +72,7 @@ export default function Shop() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 gap-y-16">
-          {PRODUCTS.map((product, idx) => (
+          {products.map((product, idx) => (
             <motion.div
               layout
               key={product.id}
@@ -72,7 +85,7 @@ export default function Shop() {
                   <img 
                     alt={product.name} 
                     className="object-contain w-full h-full mix-blend-multiply transition-transform duration-700 group-hover:scale-105" 
-                    src={product.images[0]}
+                    src={product.images?.[0] || 'https://via.placeholder.com/400'}
                     referrerPolicy="no-referrer"
                   />
                   <div className="absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -87,18 +100,20 @@ export default function Shop() {
                     <h2 className="text-lg font-semibold text-on-surface leading-tight">{product.name}</h2>
                     <span className="text-lg font-medium text-on-surface">${product.price}</span>
                   </div>
-                  <p className="text-sm text-on-surface-variant mt-1 italic">{product.shortDescription}</p>
+                  <p className="text-sm text-on-surface-variant mt-1 italic">{product.short_description || product.description}</p>
                 </div>
               </Link>
             </motion.div>
           ))}
         </div>
 
-        <div className="mt-16 flex justify-center">
-          <button className="bg-surface-container-low text-on-surface font-label text-xs uppercase tracking-widest py-4 px-12 rounded-full hover:bg-surface-container transition-colors duration-300 font-bold">
-            Load More
-          </button>
-        </div>
+        {!loading && products.length > 0 && (
+          <div className="mt-16 flex justify-center">
+            <button className="bg-surface-container-low text-on-surface font-label text-xs uppercase tracking-widest py-4 px-12 rounded-full hover:bg-surface-container transition-colors duration-300 font-bold">
+              Load More
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

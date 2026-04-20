@@ -6,14 +6,48 @@
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Plus } from 'lucide-react';
-import { PRODUCTS } from '../data';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { useCartStore } from '../store/cartStore';
 
 export default function ProductDetail() {
   const { id } = useParams();
-  const product = PRODUCTS.find(p => p.id === id);
+  const [product, setProduct] = useState<any>(null);
+  const [related, setRelated] = useState<any[]>([]);
   const [selectedSize, setSelectedSize] = useState('9');
+  const [loading, setLoading] = useState(true);
+  
+  const addToCart = useCartStore((state) => state.addToCart);
 
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      // Fetch current product
+      const { data: prodData } = await supabase.from('products').select('*').eq('id', id).single();
+      if (prodData) setProduct(prodData);
+      
+      // Fetch related products
+      const { data: relData } = await supabase.from('products').select('*').neq('id', id).limit(3);
+      if (relData) setRelated(relData);
+      
+      setLoading(false);
+    }
+    if (id) fetchData();
+  }, [id]);
+
+  const handleAddToCart = () => {
+    if (product) {
+      addToCart({
+        id: product.id,
+        name: product.name,
+        price: Number(product.price),
+        image_url: product.images?.[0] || 'https://via.placeholder.com/400'
+      });
+      alert('Added to your curation bag!');
+    }
+  };
+
+  if (loading) return <div className="p-20 text-center font-bold uppercase tracking-widest text-on-surface-variant opacity-40">Loading Object...</div>;
   if (!product) return <div className="p-20 text-center font-bold uppercase tracking-widest text-on-surface-variant opacity-40">Object not found.</div>;
 
   return (
@@ -29,7 +63,7 @@ export default function ProductDetail() {
             <img 
               alt={product.name} 
               className="w-full h-full object-cover mix-blend-multiply" 
-              src={product.images[0]}
+              src={product.images?.[0] || 'https://via.placeholder.com/600'}
               referrerPolicy="no-referrer"
             />
           </motion.div>
@@ -38,7 +72,7 @@ export default function ProductDetail() {
               <img 
                 alt="Detail" 
                 className="w-full h-full object-cover mix-blend-multiply transition-transform hover:scale-110" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUphIk3M39FRp6v45BdC7cuyXOLQBktPjTOtmon7JeA8apOHdBNL8x0yICieI1yXIiOpWmJPOGhwaV0doYqca5jwODUzSBGBzWk8RdgxqwMFz-4cuJXCcfHNp_CD5xyk2bPOZQ-Z_bVqMEqWiui9NQBAunIikmprgcTYKldnEAU4QPE3sHONNWDGer0Op_zMgNGpelwcpAb93jswDj_C0OBIOs8u34l9aVAxyo6e2_tO5MgbrmhXasYrG9Ql9R7IzgG6CiaYopLVk" 
+                src={product.images?.[1] || product.images?.[0] || 'https://via.placeholder.com/400'} 
                 referrerPolicy="no-referrer"
               />
             </div>
@@ -46,7 +80,7 @@ export default function ProductDetail() {
               <img 
                 alt="Detail" 
                 className="w-full h-full object-cover mix-blend-multiply transition-transform hover:scale-110" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuATll4Mh1DfHEYOvepYtDrbSI_BHlVoMgyxj_OW-LOkszY-Z_Vr58ODycXBflWxHwgYiWkytH8J1oVmJrbYM4--DRGFY9i_h9JOt8xAeuvg8saNlDd0rOxhuIYPb7WCfe3uOJbSr7PoqPdMFIxE9Rp_0Tbf7-kip1GCrsXYXJqLFeSvmmrii5Csh1Us5kxgECUjvQcHAVYyt4frMoLGQ-T0sk9pSj15EGf1Ge55riQCB-e-C2LW1FWPX7fvxgjpkp8IEcJjqwbF348" 
+                src={product.images?.[2] || product.images?.[0] || 'https://via.placeholder.com/400'} 
                 referrerPolicy="no-referrer"
               />
             </div>
@@ -63,7 +97,7 @@ export default function ProductDetail() {
 
           <div className="flex flex-col gap-4">
             <h3 className="text-lg font-semibold text-on-surface uppercase tracking-widest text-xs">The Curated Statement</h3>
-            <p className="text-base text-on-surface-variant leading-relaxed opacity-80">
+            <p className="text-base text-on-surface-variant leading-relaxed opacity-80 whitespace-pre-line">
               {product.description}
             </p>
           </div>
@@ -89,7 +123,7 @@ export default function ProductDetail() {
             </div>
 
             <div className="flex flex-col gap-3 pt-4">
-              <button className="w-full py-5 bg-gradient-to-r from-primary to-primary-container text-on-primary rounded-lg font-semibold text-base hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2">
+              <button onClick={handleAddToCart} className="w-full py-5 bg-gradient-to-r from-primary to-primary-container text-on-primary rounded-lg font-semibold text-base hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2">
                 Add to Cart
               </button>
               <Link to="/checkout" className="w-full py-5 bg-secondary-fixed text-on-secondary-fixed rounded-lg font-semibold text-base hover:bg-secondary-fixed/80 active:scale-95 transition-all text-center">
@@ -106,7 +140,7 @@ export default function ProductDetail() {
                 <Plus size={18} className="transition-transform group-open:rotate-45" />
               </summary>
               <div className="pb-8 text-sm text-on-surface-variant leading-relaxed">
-                Handcrafted from {product.material}. Sustainably sourced and naturally treated. Avoid direct sunlight for extended periods. Wipe with a damp cloth only.
+                Handcrafted from {product.material || 'premium materials'}. Sustainably sourced and naturally treated. Avoid direct sunlight for extended periods. Wipe with a damp cloth only.
               </div>
             </details>
             <details className="group border-b border-surface-container-high/50">
@@ -115,12 +149,16 @@ export default function ProductDetail() {
                 <Plus size={18} className="transition-transform group-open:rotate-45" />
               </summary>
               <div className="pb-8 space-y-2">
-                {Object.entries(product.specs).map(([key, val]) => (
-                  <div key={key} className="flex justify-between text-sm">
-                    <span className="text-on-surface-variant">{key}</span>
-                    <span className="text-on-surface font-medium">{val}</span>
-                  </div>
-                ))}
+                {product.specs && Object.entries(product.specs).length > 0 ? (
+                  Object.entries(product.specs).map(([key, val]) => (
+                    <div key={key} className="flex justify-between text-sm">
+                      <span className="text-on-surface-variant">{key}</span>
+                      <span className="text-on-surface font-medium">{String(val)}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-on-surface-variant">No specifications available.</div>
+                )}
               </div>
             </details>
           </div>
@@ -131,10 +169,10 @@ export default function ProductDetail() {
       <section className="mt-32 pt-24 border-t border-surface-container-high">
         <h2 className="text-2xl font-headline font-semibold text-on-surface mb-12 text-center tracking-tight uppercase tracking-[0.2em]">Curated Accompaniments</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {PRODUCTS.slice(0, 3).map(p => (
+          {related.map(p => (
             <Link key={p.id} to={`/product/${p.id}`} className="group flex flex-col gap-6 p-6 bg-surface-container-low/30 rounded-xl hover:bg-surface-container-lowest hover:shadow-ambient transition-all duration-500">
               <div className="w-full aspect-[4/5] bg-surface-container rounded-lg overflow-hidden relative">
-                <img alt={p.name} className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700" src={p.images[0]} referrerPolicy="no-referrer" />
+                <img alt={p.name} className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700" src={p.images?.[0] || 'https://via.placeholder.com/400'} referrerPolicy="no-referrer" />
               </div>
               <div className="flex flex-col gap-1">
                 <h4 className="text-lg font-semibold text-on-surface">{p.name}</h4>
