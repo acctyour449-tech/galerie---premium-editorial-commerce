@@ -24,8 +24,10 @@ export interface CartItem {
 }
 
 export interface User {
+  id: string;
   name: string;
   email: string;
+  role: 'buyer' | 'seller';
   memberSince: string;
   tier: 'Standard' | 'Premium';
   avatar?: string;

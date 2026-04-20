@@ -4,9 +4,18 @@
  */
 
 import { LayoutDashboard, ShoppingBag, ReceiptText, Package, Settings, Store, LogOut } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export default function SellerSidebar() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <aside className="fixed left-0 top-0 h-full w-72 bg-surface border-r border-surface-container-low flex flex-col gap-2 p-6 z-40 hidden md:flex">
       <div className="mb-8 flex items-center gap-4">
@@ -59,7 +68,10 @@ export default function SellerSidebar() {
       </nav>
 
       <div className="pt-6 border-t border-surface-container-low">
-        <button className="flex items-center gap-4 w-full px-4 py-3 text-on-surface-variant hover:text-error hover:bg-error/5 transition-all duration-300 rounded-lg font-medium text-sm">
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-4 w-full px-4 py-3 text-on-surface-variant hover:text-error hover:bg-error/5 transition-all duration-300 rounded-lg font-medium text-sm"
+        >
           <LogOut size={20} />
           <span>Sign Out</span>
         </button>

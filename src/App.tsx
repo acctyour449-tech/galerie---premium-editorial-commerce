@@ -23,33 +23,75 @@ import Profile from './pages/Profile';
 import SellerDashboard from './pages/SellerDashboard';
 import Inventory from './pages/Inventory';
 import AddProduct from './pages/AddProduct';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
 export default function App() {
   return (
-    <Router>
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/shop" element={<Shop />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/success" element={<Success />} />
-            <Route path="/register" element={<Registration />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/profile" element={<Profile />} />
-            
-            {/* Seller Routes */}
-            <Route path="/seller" element={<SellerDashboard />} />
-            <Route path="/seller/inventory" element={<Inventory />} />
-            <Route path="/seller/products" element={<Inventory />} />
-            <Route path="/seller/products/new" element={<AddProduct />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen flex flex-col">
+          <Navbar />
+          <main className="flex-grow">
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Home />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/success" element={<Success />} />
+              <Route path="/register" element={<Registration />} />
+              <Route path="/login" element={<Login />} />
+              
+              {/* Protected Routes */}
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Seller Routes - Protected by role */}
+              <Route 
+                path="/seller" 
+                element={
+                  <ProtectedRoute allowedRoles={['seller']}>
+                    <SellerDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/seller/inventory" 
+                element={
+                  <ProtectedRoute allowedRoles={['seller']}>
+                    <Inventory />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/seller/products" 
+                element={
+                  <ProtectedRoute allowedRoles={['seller']}>
+                    <Inventory />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/seller/products/new" 
+                element={
+                  <ProtectedRoute allowedRoles={['seller']}>
+                    <AddProduct />
+                  </ProtectedRoute>
+                } 
+              />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
