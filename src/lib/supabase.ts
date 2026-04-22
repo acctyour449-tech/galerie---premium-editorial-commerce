@@ -1,14 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Tạm thời vô hiệu hóa việc đọc từ file .env và gán cứng (hardcode) trực tiếp
-const supabaseUrl = 'https://uogltdqdkpjrnsibntao.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZ2x0ZHFka3Bqcm5zbGJudGFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2MDk2NTcsImV4cCI6MjA5MjE4NTY1N30.tKglUbjoR41-HGaUcH6_9GTZacIU1jl-m8voIc_8hLg'; 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey || supabaseAnonKey === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZ2x0ZHFka3Bqcm5zbGJudGFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2MDk2NTcsImV4cCI6MjA5MjE4NTY1N30.tKglUbjoR41-HGaUcH6_9GTZacIU1jl-m8voIc_8hLg') {
-  console.error('❌ Missing or invalid Supabase environment variables! Please check supabase.ts');
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Missing Supabase environment variables! Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
