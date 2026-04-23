@@ -14,6 +14,7 @@ import SellerDashboard from './pages/SellerDashboard';
 import Inventory from './pages/Inventory';
 import AddProduct from './pages/AddProduct';
 import AuthCallback from './pages/AuthCallback';
+import PasswordRecovery from './pages/PasswordRecovery';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -34,6 +35,7 @@ export default function App() {
               <Route path="/success" element={<Success />} />
               <Route path="/register" element={<Registration />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/reset-password" element={<PasswordRecovery />} />
 
               {/* OAuth Callback - handles Google redirect */}
               <Route path="/auth/callback" element={<AuthCallback />} />
