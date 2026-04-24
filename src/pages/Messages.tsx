@@ -157,12 +157,14 @@ export default function Messages() {
   // ── Auto-open / create conversation from URL params ────────────────────────
 
   useEffect(() => {
-    if (!paramSellerId || !user || profile?.role !== 'buyer' || loadingConvs) return;
+    if (!paramSellerId || !user || loadingConvs) return;
 
     const openOrCreate = async () => {
       // Check if conversation already exists
       const existing = conversations.find(
-        c => c.seller_id === paramSellerId && (paramProductId ? c.product_id === paramProductId : true)
+        c => c.seller_id === paramSellerId
+          && c.buyer_id === user.id
+          && (paramProductId ? c.product_id === paramProductId : true)
       );
 
       if (existing) {
@@ -172,6 +174,10 @@ export default function Messages() {
       }
 
       // Create new conversation
+      if (user.id === paramSellerId) {
+        return;
+      }
+
       const { data, error } = await supabase
         .from('conversations')
         .insert({
@@ -195,11 +201,15 @@ export default function Messages() {
       const newConv = data as ConversationRow;
 
       // Auto-send greeting from seller side (system-like first message)
-      await supabase.from('messages').insert({
+      const { error: greetingError } = await supabase.from('messages').insert({
         conversation_id: newConv.id,
         sender_id: paramSellerId,
         content: `Xin chào! Tôi là người bán. Bạn muốn hỏi về sản phẩm "${paramProductName || 'này'}" phải không?`,
       });
+
+      if (greetingError) {
+        console.warn('Auto greeting skipped:', greetingError.message);
+      }
 
       setConversations(prev => [newConv, ...prev]);
       setActiveConvId(newConv.id);
@@ -207,8 +217,7 @@ export default function Messages() {
     };
 
     openOrCreate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paramSellerId, paramProductId, user, profile, loadingConvs]);
+  }, [paramSellerId, paramProductId, paramProductName, user, loadingConvs, conversations]);
 
   // ── Load messages for active conversation ──────────────────────────────────
 
