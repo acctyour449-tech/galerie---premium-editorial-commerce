@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Send, MessageCircleMore, Store, UserCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useUserPreferences } from '../context/UserPreferencesContext';
+import { useSearchParams } from 'react-router-dom';
 
 type Role = 'buyer' | 'seller';
 
@@ -14,6 +15,8 @@ interface ConversationMessage {
 
 interface Conversation {
   id: string;
+  sellerId?: string;
+  productId?: string;
   name: string;
   counterpartRole: Role;
   topic: string;
@@ -24,6 +27,8 @@ interface Conversation {
 const initialThreads: Conversation[] = [
   {
     id: 'thread-atelier',
+    sellerId: 'atelier-nord',
+    productId: 'lounge-chair',
     name: 'Atelier Nord',
     counterpartRole: 'seller',
     topic: 'Hỏi về thời gian giao ghế lounge',
@@ -43,21 +48,6 @@ const initialThreads: Conversation[] = [
       },
     ],
   },
-  {
-    id: 'thread-premium-support',
-    name: 'Premium Support',
-    counterpartRole: 'seller',
-    topic: 'Đổi địa chỉ đơn #GLR-1205',
-    online: false,
-    messages: [
-      {
-        id: 'm3',
-        sender: 'seller',
-        content: 'Bạn có thể gửi lại địa chỉ mới để hệ thống cập nhật giúp bạn nhé.',
-        createdAt: 'Hôm qua',
-      },
-    ],
-  },
 ];
 
 const quickReplies = [
@@ -69,11 +59,14 @@ const quickReplies = [
 export default function Messages() {
   const { user, profile } = useAuth();
   const { preferences } = useUserPreferences();
+  const [searchParams] = useSearchParams();
 
-  const storageKey = useMemo(
-    () => `galerie:messages:${user?.id || 'guest'}`,
-    [user?.id]
-  );
+  const sellerId = searchParams.get('sellerId') || '';
+  const productId = searchParams.get('productId') || '';
+  const productName = searchParams.get('productName') || '';
+  const sellerName = searchParams.get('sellerName') || 'Người bán';
+
+  const storageKey = useMemo(() => `galerie:messages:${user?.id || 'guest'}`, [user?.id]);
 
   const [threads, setThreads] = useState<Conversation[]>(() => {
     try {
@@ -98,6 +91,43 @@ export default function Messages() {
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(threads));
   }, [threads, storageKey]);
+
+  useEffect(() => {
+    if (!sellerId || !productId) return;
+
+    const directThreadId = `thread-${sellerId}-${productId}`;
+    const topic = productName
+      ? `Trao đổi về: ${productName}`
+      : 'Trao đổi trực tiếp về sản phẩm';
+
+    setThreads(prev => {
+      const existed = prev.find(thread => thread.id === directThreadId);
+      if (existed) return prev;
+
+      return [
+        {
+          id: directThreadId,
+          sellerId,
+          productId,
+          name: sellerName,
+          counterpartRole: 'seller',
+          topic,
+          online: true,
+          messages: [
+            {
+              id: `m-${Date.now()}`,
+              sender: 'seller',
+              content: 'Xin chào! Mình là người bán. Bạn cần tư vấn gì về sản phẩm này?',
+              createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            },
+          ],
+        },
+        ...prev,
+      ];
+    });
+
+    setActiveThreadId(directThreadId);
+  }, [sellerId, productId, productName, sellerName]);
 
   const activeThread = useMemo(
     () => threads.find(thread => thread.id === activeThreadId) || threads[0],
@@ -141,14 +171,15 @@ export default function Messages() {
       <div className="mb-8">
         <h1 className="text-4xl font-headline font-semibold tracking-tight">Trung tâm tin nhắn</h1>
         <p className="text-on-surface-variant mt-2 text-sm">
-          Trao đổi trực tiếp giữa người mua và người bán để chốt đơn nhanh hơn, minh bạch hơn.
+          Khi người mua chọn sản phẩm, hệ thống sẽ mở cuộc chat trực tiếp với người bán để trao đổi nhanh.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] rounded-2xl border border-outline-variant/20 bg-surface-container-lowest overflow-hidden min-h-[640px]">
         <aside className="border-r border-outline-variant/20 bg-surface-container-low">
           {threads.map(thread => {
-            const unread = thread.id !== activeThreadId && thread.messages[thread.messages.length - 1]?.sender !== profile?.role;
+            const unread =
+              thread.id !== activeThreadId && thread.messages[thread.messages.length - 1]?.sender !== profile?.role;
             return (
               <button
                 key={thread.id}
@@ -173,7 +204,9 @@ export default function Messages() {
               {activeThread.counterpartRole === 'seller' ? <Store size={18} /> : <UserCircle2 size={18} />}
               <div>
                 <p className="font-semibold">{activeThread.name}</p>
-                <p className="text-xs text-on-surface-variant">{activeThread.online ? 'Đang hoạt động' : 'Phản hồi trong 1 giờ'}</p>
+                <p className="text-xs text-on-surface-variant">
+                  {activeThread.online ? 'Đang hoạt động' : 'Phản hồi trong 1 giờ'}
+                </p>
               </div>
             </div>
             <span className="text-xs rounded-full px-3 py-1 bg-surface-container text-on-surface-variant">{activeThread.topic}</span>
@@ -190,7 +223,9 @@ export default function Messages() {
                     }`}
                   >
                     <p>{msg.content}</p>
-                    <span className={`text-[10px] mt-1 block ${mine ? 'text-on-primary/80' : 'text-on-surface-variant'}`}>{msg.createdAt}</span>
+                    <span className={`text-[10px] mt-1 block ${mine ? 'text-on-primary/80' : 'text-on-surface-variant'}`}>
+                      {msg.createdAt}
+                    </span>
                   </div>
                 </div>
               );

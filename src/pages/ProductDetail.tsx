@@ -255,10 +255,10 @@ export default function ProductDetail() {
                 Express Checkout
               </Link>
               <Link
-                to="/messages"
+                to={`/messages?productId=${product.id}&sellerId=${product.seller_id}&productName=${encodeURIComponent(product.name)}&sellerName=${encodeURIComponent(product.seller?.name || 'Seller')}`}
                 className="w-full py-4 border border-outline-variant/30 text-on-surface rounded-lg font-semibold text-sm hover:bg-surface-container-low transition-all text-center"
               >
-                Chat with Seller Before Buying
+                Chat trực tiếp với người bán
               </Link>
             </div>
           </div>
