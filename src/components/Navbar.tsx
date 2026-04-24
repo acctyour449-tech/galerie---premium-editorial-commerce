@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Search, ShoppingBag, UserCircle, LayoutDashboard } from 'lucide-react';
+import { Search, ShoppingBag, UserCircle, LayoutDashboard, MessageCircleMore } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCartStore } from '../store/cartStore';
 import { useEffect } from 'react';
@@ -42,6 +42,9 @@ export default function Navbar() {
 
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
+              <Link to="/messages" title="Tin nhắn" className="hover:opacity-70 transition-opacity duration-300">
+                <MessageCircleMore size={20} />
+              </Link>
               {profile?.role === 'seller' && (
                 <Link to="/seller" title="Merchant Dashboard" className="hover:opacity-70 transition-opacity duration-300">
                   <LayoutDashboard size={20} />

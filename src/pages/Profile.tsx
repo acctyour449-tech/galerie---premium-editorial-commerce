@@ -1,14 +1,16 @@
 import { motion } from 'motion/react';
-import { User, ReceiptText, MapPin, Shield, LogOut, Package } from 'lucide-react';
+import { User, ReceiptText, MapPin, Shield, LogOut, Package, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase, Order, Address } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, FormEvent } from 'react';
+import { useUserPreferences } from '../context/UserPreferencesContext';
 
-type Tab = 'profile' | 'orders' | 'addresses' | 'security';
+type Tab = 'profile' | 'orders' | 'addresses' | 'security' | 'preferences';
 
 export default function Profile() {
   const { user, profile, logout, updateProfile } = useAuth();
+  const { preferences, setPreference, resetPreferences } = useUserPreferences();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -239,6 +241,7 @@ export default function Profile() {
             { id: 'orders', label: 'My Orders', icon: <ReceiptText size={20} /> },
             { id: 'addresses', label: 'Addresses', icon: <MapPin size={20} /> },
             { id: 'security', label: 'Security', icon: <Shield size={20} /> },
+            { id: 'preferences', label: 'Preferences', icon: <SlidersHorizontal size={20} /> },
           ].map(item => (
             <button
               key={item.id}
@@ -515,6 +518,101 @@ export default function Profile() {
               >
                 {isGlobalSignOutLoading ? 'Signing out...' : 'Sign Out All Devices'}
               </button>
+            </section>
+          </>
+        )}
+
+        {/* Preferences Tab */}
+        {activeTab === 'preferences' && (
+          <>
+            <header>
+              <h1 className="text-5xl font-bold tracking-tighter text-on-surface mb-2">Preferences</h1>
+              <p className="text-on-surface-variant text-lg font-medium italic opacity-70">Cá nhân hóa giao diện, thông báo và trải nghiệm mua sắm của bạn.</p>
+            </header>
+
+            <section className="bg-surface-container-low/30 p-8 rounded-2xl border border-black/5 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <label className="space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Language</p>
+                  <select
+                    value={preferences.language}
+                    onChange={e => setPreference('language', e.target.value as 'vi' | 'en')}
+                    className="w-full bg-surface-container-low rounded-xl px-4 py-3 outline-none"
+                  >
+                    <option value="vi">Tiếng Việt</option>
+                    <option value="en">English</option>
+                  </select>
+                </label>
+                <label className="space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Currency</p>
+                  <select
+                    value={preferences.currency}
+                    onChange={e => setPreference('currency', e.target.value as 'USD' | 'VND')}
+                    className="w-full bg-surface-container-low rounded-xl px-4 py-3 outline-none"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="VND">VND (₫)</option>
+                  </select>
+                </label>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  {
+                    key: 'reducedMotion' as const,
+                    title: 'Giảm hiệu ứng chuyển động',
+                    desc: 'Thoải mái hơn khi duyệt website và giảm mỏi mắt.',
+                  },
+                  {
+                    key: 'emailOrderUpdates' as const,
+                    title: 'Email cập nhật đơn hàng',
+                    desc: 'Nhận thông báo khi đơn được xác nhận, đóng gói và giao.',
+                  },
+                  {
+                    key: 'emailPromotions' as const,
+                    title: 'Email ưu đãi cá nhân',
+                    desc: 'Nhận bộ sưu tập và mã giảm giá theo hành vi mua sắm.',
+                  },
+                  {
+                    key: 'chatSound' as const,
+                    title: 'Âm báo khi có tin nhắn',
+                    desc: 'Bật rung/âm báo nhẹ khi người bán phản hồi.',
+                  },
+                ].map(item => (
+                  <label key={item.key} className="flex items-start justify-between gap-4 p-4 rounded-xl bg-surface-container-low">
+                    <div>
+                      <p className="font-semibold text-on-surface">{item.title}</p>
+                      <p className="text-sm text-on-surface-variant">{item.desc}</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={preferences[item.key]}
+                      onChange={e => setPreference(item.key, e.target.checked)}
+                      className="w-5 h-5 accent-primary mt-1"
+                    />
+                  </label>
+                ))}
+              </div>
+
+              <div className="flex justify-between items-center pt-2">
+                <p className="text-sm text-on-surface-variant">
+                  Layout hiện tại: <strong className="text-on-surface">{preferences.density}</strong>
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setPreference('density', preferences.density === 'comfortable' ? 'compact' : 'comfortable')}
+                    className="px-4 py-2 rounded-lg bg-surface-container-low text-xs font-bold uppercase tracking-widest"
+                  >
+                    Toggle Density
+                  </button>
+                  <button
+                    onClick={resetPreferences}
+                    className="px-4 py-2 rounded-lg bg-error/10 text-error text-xs font-bold uppercase tracking-widest"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
             </section>
           </>
         )}

@@ -16,16 +16,19 @@ import AddProduct from './pages/AddProduct';
 import AuthCallback from './pages/AuthCallback';
 import PasswordRecovery from './pages/PasswordRecovery';
 import { AuthProvider } from './context/AuthContext';
+import { UserPreferencesProvider } from './context/UserPreferencesContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import Messages from './pages/Messages';
 
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="min-h-screen flex flex-col">
-          <Navbar />
-          <main className="flex-grow">
-            <Routes>
+      <UserPreferencesProvider>
+        <Router>
+          <div className="min-h-screen flex flex-col">
+            <Navbar />
+            <main className="flex-grow">
+              <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Home />} />
               <Route path="/shop" element={<Shop />} />
@@ -41,6 +44,16 @@ export default function App() {
               <Route path="/auth/callback" element={<AuthCallback />} />
 
               {/* Protected Routes */}
+
+              <Route
+                path="/messages"
+                element={
+                  <ProtectedRoute>
+                    <Messages />
+                  </ProtectedRoute>
+                }
+              />
+
               <Route
                 path="/profile"
                 element={
@@ -83,11 +96,12 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </Router>
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </Router>
+      </UserPreferencesProvider>
     </AuthProvider>
   );
 }

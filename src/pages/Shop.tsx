@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Heart } from 'lucide-react';
+import { ChevronDown, Search, SlidersHorizontal } from 'lucide-react';
 import { supabase, Product } from '../lib/supabase';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +15,9 @@ export default function Shop() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortBy, setSortBy] = useState('featured');
+  const [query, setQuery] = useState('');
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [onSaleOnly, setOnSaleOnly] = useState(false);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,6 +44,17 @@ export default function Shop() {
     if (!error && data) setProducts(data as Product[]);
     setIsLoading(false);
   };
+
+
+  const filteredProducts = products.filter(product => {
+    const matchesQuery =
+      query.trim().length === 0 ||
+      product.name.toLowerCase().includes(query.toLowerCase()) ||
+      (product.short_description || '').toLowerCase().includes(query.toLowerCase());
+    const matchesStock = !inStockOnly || product.stock_quantity > 0;
+    const matchesSale = !onSaleOnly || !!product.sale_price;
+    return matchesQuery && matchesStock && matchesSale;
+  });
 
   const handleAddToCart = async (e: React.MouseEvent, productId: string) => {
     e.preventDefault();
@@ -86,22 +100,48 @@ export default function Shop() {
           </p>
         </div>
 
-        <div className="flex justify-between items-center py-4 border-b border-surface-container-low">
-          <div className="text-sm text-on-surface-variant font-medium">
-            {isLoading ? 'Loading...' : `Showing ${products.length} items`}
-          </div>
-          <div className="relative">
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              className="appearance-none bg-transparent text-[10px] font-bold uppercase tracking-widest text-on-surface pr-6 outline-none cursor-pointer"
+        <div className="flex flex-col gap-4 py-4 border-b border-surface-container-low">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 bg-surface-container-low px-3 py-2 rounded-lg min-w-[260px]">
+              <Search size={15} className="text-on-surface-variant" />
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Search products, style, material..."
+                className="bg-transparent outline-none text-sm w-full"
+              />
+            </div>
+            <button
+              onClick={() => setInStockOnly(prev => !prev)}
+              className={`text-xs px-3 py-2 rounded-full border transition-colors ${inStockOnly ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant/30'}`}
             >
-              <option value="featured">Sort: Featured</option>
-              <option value="newest">Sort: Newest</option>
-              <option value="price_asc">Sort: Price Low-High</option>
-              <option value="price_desc">Sort: Price High-Low</option>
-            </select>
-            <ChevronDown size={12} className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+              In stock
+            </button>
+            <button
+              onClick={() => setOnSaleOnly(prev => !prev)}
+              className={`text-xs px-3 py-2 rounded-full border transition-colors ${onSaleOnly ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant/30'}`}
+            >
+              On sale
+            </button>
+            <span className="inline-flex items-center gap-1 text-xs text-on-surface-variant"><SlidersHorizontal size={14} /> Quick filters</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-on-surface-variant font-medium">
+              {isLoading ? 'Loading...' : `Showing ${filteredProducts.length} items`}
+            </div>
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+                className="appearance-none bg-transparent text-[10px] font-bold uppercase tracking-widest text-on-surface pr-6 outline-none cursor-pointer"
+              >
+                <option value="featured">Sort: Featured</option>
+                <option value="newest">Sort: Newest</option>
+                <option value="price_asc">Sort: Price Low-High</option>
+                <option value="price_desc">Sort: Price High-Low</option>
+              </select>
+              <ChevronDown size={12} className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
         </div>
 
@@ -115,7 +155,7 @@ export default function Shop() {
               </div>
             ))}
           </div>
-        ) : products.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <div className="py-32 text-center">
             <p className="text-on-surface-variant opacity-40 font-medium uppercase tracking-widest text-sm">
               No products found in {activeCategory}
@@ -123,7 +163,7 @@ export default function Shop() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 gap-y-16">
-            {products.map((product, idx) => (
+            {filteredProducts.map((product, idx) => (
               <motion.div
                 key={product.id}
                 initial={{ opacity: 0, y: 20 }}

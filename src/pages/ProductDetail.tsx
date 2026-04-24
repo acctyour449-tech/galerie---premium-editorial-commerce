@@ -254,6 +254,12 @@ export default function ProductDetail() {
               >
                 Express Checkout
               </Link>
+              <Link
+                to="/messages"
+                className="w-full py-4 border border-outline-variant/30 text-on-surface rounded-lg font-semibold text-sm hover:bg-surface-container-low transition-all text-center"
+              >
+                Chat with Seller Before Buying
+              </Link>
             </div>
           </div>
 
